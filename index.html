@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="app-key" content="RAMS_v2">
+  <title>CPP &amp; RAMS — AHS Compliance Consulting</title>
+  <link rel="icon" type="image/png" href="ahs.png">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     TOOLBAR
+═══════════════════════════════════════ -->
+<div class="global-rte" role="toolbar" aria-label="Rich text formatting toolbar">
+  <button type="button" class="rte-btn" data-cmd="bold"><b>B</b></button>
+  <button type="button" class="rte-btn" data-cmd="italic"><i>I</i></button>
+  <button type="button" class="rte-btn" data-cmd="underline"><u>U</u></button>
+  <span class="rte-sep"></span>
+  <button type="button" class="rte-btn" data-cmd="insertUnorderedList">• List</button>
+  <button type="button" class="rte-btn" data-cmd="insertOrderedList">1. List</button>
+  <button type="button" class="rte-btn" data-cmd="outdent">←</button>
+  <button type="button" class="rte-btn" data-cmd="indent">→</button>
+  <span class="rte-sep"></span>
+  <button type="button" class="rte-btn" data-cmd="justifyLeft">⟸</button>
+  <button type="button" class="rte-btn" data-cmd="justifyCenter">⇔</button>
+  <button type="button" class="rte-btn" data-cmd="justifyRight">⟹</button>
+  <button type="button" class="rte-btn" data-cmd="valignTop">Top</button>
+  <button type="button" class="rte-btn" data-cmd="valignBottom">Bot</button>
+  <span class="rte-sep"></span>
+  <button type="button" class="rte-btn" data-cmd="createLink">🔗</button>
+  <button type="button" class="rte-btn" id="btnInsertTable">📋 Table</button>
+  <button type="button" class="rte-btn color-btn" id="btnCellBg">🎨 Cell</button>
+  <button type="button" class="rte-btn color-btn" id="btnTextColor">🎨 Text</button>
+  <button type="button" class="rte-btn" data-cmd="removeFormat">⌫ Clear</button>
+  <span class="rte-sep"></span>
+  <button type="button" class="table-btn-success" id="btnAddRow">+ Row</button>
+  <button type="button" class="table-btn-danger"  id="btnRemoveRow">− Row</button>
+  <button type="button" class="rte-btn" id="btnDuplicateRow">📋 Dup</button>
+  <button type="button" class="rte-btn warning" id="btnClearRow">🧹 Clear Row</button>
+  <button type="button" class="rte-btn danger"  id="btnRemoveClickedRow">✕ Row</button>
+  <span class="rte-sep"></span>
+  <button type="button" class="rte-btn btn-add-ppe"    id="btnAddPPE">+ PPE</button>
+  <button type="button" class="rte-btn btn-remove-ppe" id="btnRemovePPE">- PPE</button>
+  <span class="rte-sep"></span>
+  <button type="button" class="rte-btn"        id="btnAddSection">+ Section</button>
+  <button type="button" class="rte-btn danger" id="btnRemoveSection">− Section</button>
+  <button type="button" class="rte-btn"        id="btnRenameSection">✏️ Rename</button>
+  <button type="button" class="rte-btn"        id="btnAddPageBreak">📄 Break</button>
+  <span class="rte-sep"></span>
+  <button type="button" class="rte-btn" id="btnClientReport">📊 Report</button>
+  <button type="button" class="rte-btn" id="btnSave">💾 Save</button>
+  <button type="button" class="rte-btn" id="btnExportSaveas">📥 Save As</button>
+  <button type="button" class="rte-btn danger" id="btnClearAll">🗑 Clear</button>
+  <span class="rte-sep"></span>
+  <select id="cppTemplateSelect" style="font-size:12px;padding:3px 6px;border:1px solid #ced4da;border-radius:4px;height:28px;max-width:160px;background:white;" title="Select CPP project type">
+    <option value="">— CPP type —</option>
+  </select>
+  <button type="button" class="rte-btn" id="btnPopulateCPP" title="Load CPP template for selected project type" style="background:var(--ahs-cyan);color:white;font-weight:600;">📋 Load CPP</button>
+  <span class="rte-sep"></span>
+  <select id="ramsTemplateSelect" style="font-size:12px;padding:3px 6px;border:1px solid #ced4da;border-radius:4px;height:28px;max-width:160px;background:white;" title="Select RAMS trade type">
+    <option value="">— RAMS type —</option>
+  </select>
+  <button type="button" class="rte-btn" id="btnPopulateRAMS" title="Load RAMS template for selected trade type" style="background:var(--ahs-cyan);color:white;font-weight:600;">📋 Load RAMS</button>
+  <span class="rte-sep"></span>
+  <button type="button" class="rte-btn" id="btnGenerateMS" title="Generate Method Statement pages from Section 14 RAMS list" style="background:#2d6a4f;color:white;font-weight:600;">⚡ Generate MS</button>
+  <button type="button" class="rte-btn" id="btnGenerateRA" title="Generate Risk Assessment forms from Method Statement pages" style="background:#7b2d8b;color:white;font-weight:600;">⚡ Generate RA</button>
+  <span class="rte-sep"></span>
+  <!-- CLIENT PDF THEME SELECTOR -->
+  <div class="client-profile-wrap">
+    <span class="client-profile-label">PDF Client:</span>
+    <select class="client-profile-select" id="clientProfileSelect"></select>
+    <button type="button" class="client-profile-manage" id="btnManageProfiles">⚙ Manage</button>
+  </div>
+  <!-- Hidden inputs -->
+  <input type="color" id="cellColorPicker" style="display:none" value="#ffff00">
+  <input type="color" id="textColorPicker" style="display:none" value="#000000">
+</div>
+
+<!-- ═══════════════════════════════════════
+     TABS
+═══════════════════════════════════════ -->
+<div class="tabs">
+  <div class="tabs-container">
+    <button type="button" class="tab-button"        data-tab="tab-cpp">CONSTRUCTION PHASE PLAN</button>
+    <button type="button" class="tab-button active" data-tab="tab-rams">RAMS FRONT PAGE</button>
+    <button type="button" class="tab-button"        data-tab="tab-ms">METHOD STATEMENT</button>
+    <button type="button" class="tab-button"        data-tab="tab-ra">RISK ASSESSMENT</button>
+  </div>
+  <div class="export-selector">
+    <span class="export-label">Export:</span>
+    <label class="export-radio"><input type="radio" name="exportTab" value="tab-rams" checked><span>RAMS</span></label>
+    <label class="export-radio"><input type="radio" name="exportTab" value="tab-ms"><span>MS</span></label>
+    <label class="export-radio"><input type="radio" name="exportTab" value="tab-ra"><span>RA</span></label>
+    <label class="export-radio"><input type="radio" name="exportTab" value="tab-cpp"><span>CPP</span></label>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     RAMS FRONT PAGE TAB
+═══════════════════════════════════════ -->
+<div id="tab-rams" class="tab-panel active">
+<div class="sheet" role="document">
+<script>try{document.execCommand('enableObjectResizing',false,'true');}catch(e){}</script>
+
+<!-- Letterhead -->
+<div class="letterhead" contenteditable="false">
+  <div class="lh-left">
+    <img class="lh-logo" id="lhLogofp" src="ahs.png" alt="AHS Logo" onerror="this.style.display='none'">
+    <div class="lh-produced">
+      <span class="lh-muted">Produced by</span>
+      <span class="lh-strong" id="lhProducerfp" data-persist data-key="producer" contenteditable="true">AHS Compliance Consulting</span>
+    </div>
+  </div>
+  <div class="lh-center">
+    <div class="lh-clientline">
+      <span class="lh-muted">Prepared for</span>
+      <span class="lh-client" id="lhClientNamefp" data-persist data-key="clientName" contenteditable="true">Client Name</span>
+    </div>
+    <div class="lh-title" id="lhTitlefp" data-persist data-key="title" contenteditable="true">RAMS</div>
+    <div class="lh-subtitle" id="lhSubtitlefp" contenteditable="true">Risk Assessment &amp; Method Statement</div>
+  </div>
+  <div class="lh-right">
+    <div class="lh-chip">
+      <div class="lh-chip-label">Date</div>
+      <div class="lh-chip-value" id="lhDatefp" data-persist data-key="date" title="Click to pick a date">Select Date</div>
+      <input type="date" id="lhDatePickerfp" class="lh-date-input" aria-label="Pick report date">
+    </div>
+  </div>
+</div>
+
+<!-- Date Picker Modal -->
+<div id="dateModalfp" class="date-modal">
+  <div class="date-modal-content">
+    <div class="date-modal-header">
+      <button class="date-nav-btn" id="datePrevBtnfp">‹</button>
+      <div class="date-current-month" id="dateCurrentMonthfp">January 2026</div>
+      <button class="date-nav-btn" id="dateNextBtnfp">›</button>
+    </div>
+    <div class="date-modal-body">
+      <div class="date-weekdays"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+      <div class="date-days" id="dateDaysfp"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Client logo -->
+<div class="client-logo-section"><img src="client.png" alt="Client Logo" class="client-logo" id="clientLogofp" onerror="this.style.display='none'"></div>
+
+<!-- Project Details -->
+<table id="projectInfoTable" class="project-info">
+  <tbody>
+    <tr><td class="label"><strong>Project Name</strong></td><td id="projectNamefp" class="value" contenteditable="true" data-persist data-key="project.Namefp"></td></tr>
+    <tr><td class="label"><strong>Client (Contract)</strong></td><td id="clientContractfp" class="value" contenteditable="true" data-persist data-key="project.clientContractfp"></td></tr>
+    <tr><td class="label"><strong>Site Address</strong></td><td id="siteAddressfp" class="value" contenteditable="true" data-persist data-key="project.siteAddressfp"></td></tr>
+    <tr><td class="label"><strong>Works to be Undertaken</strong></td><td id="worksToBeUndertakenfp" class="value" contenteditable="true" data-persist data-key="project.worksToBeUndertakenfp"></td></tr>
+    <tr><td class="label"><strong>Prepared by</strong></td><td id="preparedByfp" class="value" contenteditable="true" data-persist data-key="project.preparedByfp"></td></tr>
+    <tr><td class="label"><strong>Start On Site</strong></td><td id="startOnSitefp" class="value" contenteditable="true" data-persist data-key="project.startOnSitefp"></td></tr>
+    <tr><td class="label"><strong>Duration (Wks)</strong></td><td id="durationWksfp" class="value" contenteditable="true" data-persist data-key="project.durationWksfp"></td></tr>
+  </tbody>
+</table>
+
+<!-- Section 1: Project Directory -->
+<section class="section">
+  <div class="section-header">Section 1: Project Directory</div>
+  <div class="section-content">
+    <table id="directoryTablefp" class="directory-table">
+      <tbody>
+        <tr><td class="dir-label">Client (CDM):</td><td contenteditable="true" data-persist data-key="directory.clientcdmfp"></td><td class="dir-label">Principal Designer:</td><td contenteditable="true" data-persist data-key="directory.principalDesignerfp"></td></tr>
+        <tr><td class="dir-label">Principal Contractor:</td><td contenteditable="true" data-persist data-key="directory.principalContractorfp"></td><td class="dir-label">Contractor</td><td contenteditable="true" data-persist data-key="directory.contractorfp"></td></tr>
+        <tr><td class="dir-label">Site Contacts:</td><td contenteditable="true" data-persist data-key="directory.siteContactsfp"></td><td class="dir-label">Contact Details</td><td contenteditable="true" data-persist data-key="directory.contactDetailsfp"></td></tr>
+        <tr><td class="dir-label">Date Prepared:</td><td contenteditable="true" data-persist data-key="directory.datePreparedfp"></td><td class="dir-label">Date Approved:</td><td contenteditable="true" data-persist data-key="directory.dateApprovedfp"></td></tr>
+        <tr><td class="dir-label">Expected No. On site:</td><td contenteditable="true" data-persist data-key="directory.expectedNoOnSitefp"></td><td class="dir-label">Expected Completion Date:</td><td contenteditable="true" data-persist data-key="directory.expectedCompletionDatefp"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Sections 2–8: snippet editors -->
+<section class="section" data-snip-cat="Project Description"><div class="section-header">Section 2: Project Description</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section2" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section2.projectDescriptionfp"><p></p></div></div></section>
+<section class="section" data-snip-cat="Site Specifics"><div class="section-header">Section 3: Site Specific Conditions restrictions</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section3" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section3.siteSpecificfp"><p></p></div></div></section>
+<section class="section" data-snip-cat="Scope / Sequence of Works"><div class="section-header">Section 4: Scope / Sequence of Works</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section4" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section4.scopefp"><p></p></div></div></section>
+<section class="section" data-snip-cat="Emergency Arrangements"><div class="section-header">Section 5: Emergency Arrangements</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section5" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section5.emergencyfp"><p></p></div></div></section>
+<section class="section" data-snip-cat="Roles &amp; Responsibilities"><div class="section-header">Section 6: Roles &amp; Responsibilities</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section6" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section6.rolesfp"><p></p></div></div></section>
+<section class="section" data-snip-cat="Plant, Tools &amp; Equipment"><div class="section-header">SECTION 7: Plant Tools &amp; Equipment</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section7" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section7.plantfp"><p></p></div></div></section>
+<section class="section" data-snip-cat="Training &amp; Competency"><div class="section-header">SECTION 8: Training &amp; Competency</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section8" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section8.trainingfp"><p></p></div></div></section>
+
+<!-- Section 9: Significant Risks -->
+<section class="section">
+  <div class="section-header">Section 9: Significant Risks</div>
+  <div class="section-content">
+    <table class="coshh-table">
+      <thead><tr><th>Associated Risk</th><th>Description</th><th>Referenced</th></tr></thead>
+      <tbody id="significantRisksBody" data-persist-container data-key="section9.significantRisks.tbodyfp">
+        <tr data-row-id="row-0"><td contenteditable="true" data-persist data-key="risks.0.riskfp"></td><td contenteditable="true" data-persist data-key="risks.0.descriptionfp"></td><td contenteditable="true" data-persist data-key="risks.0.referencedfp"></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:8px">
+      <button type="button" class="btn no-print" onclick="window.addSignificantRiskRow&&window.addSignificantRiskRow()">+ Row</button>
+      <button type="button" class="btn danger no-print" onclick="window.removeLastSignificantRiskRow&&window.removeLastSignificantRiskRow()">− Row</button>
+    </div>
+  </div>
+</section>
+
+<!-- Section 10: Emergency Procedures -->
+<section class="section">
+  <div class="section-header">Section 10: Site Wide Emergency Procedures</div>
+  <div class="section-content">
+    <div class="emergency-box">
+      <h3>Accident &amp; Emergency Contact</h3>
+      <p><strong>Emergency Services:</strong> 999</p>
+      <p><strong>Local Hospital A&amp;E:</strong> <span contenteditable="true" data-persist data-key="emergency.hospitalfp"></span></p>
+      <p><strong>Hospital Address:</strong> <span contenteditable="true" data-persist data-key="emergency.hospitalAddrfp"></span></p>
+      <p><strong>what3words:</strong> <span contenteditable="true" data-persist data-key="emergency.w3wfp"></span></p>
+      <p><strong>Distance to A&amp;E:</strong> <span contenteditable="true" data-persist data-key="emergency.distancefp"></span></p>
+    </div>
+    <h3>On Site Arrangements</h3>
+    <ul>
+      <li>First aid kit and trained first aider on site provided by the PC</li>
+      <li>Emergency contact numbers displayed in prominent areas by the PC</li>
+    </ul>
+    <div class="emergency-box2">
+      <h3>If a Fire is Discovered!</h3>
+      <ul><li>Raise the alarm immediately.</li><li>DO NOT attempt to fight the fire unless trained and safe to do so.</li><li>Evacuate and proceed to the muster point.</li></ul>
+    </div>
+    <h3>On Site Arrangements</h3>
+    <ul>
+      <li>Location of fire sounders to be communicated upon site induction</li>
+      <li>Emergency contact numbers displayed in prominent areas by the PC</li>
+      <li>Site evacuation plan and muster point location to be briefed by the PC upon site induction</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" data-snip-cat="Legislation &amp; Standards"><div class="section-header">Section 11: Legislation &amp; Standards</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section11" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section11.legislationfp"><p></p></div></div></section>
+<section class="section" data-snip-cat="COSHH"><div class="section-header">Section 12: COSHH</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section12" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section12.coshhfp"><p></p></div></div></section>
+<section class="section" data-snip-cat="PPE Standards"><div class="section-header">Section 13: PPE</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section13" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section13.ppefp"><p></p></div></div></section>
+<section class="section" data-snip-cat="RAMS List"><div class="section-header">Section 14: Appended Specific Risk Assessments and Method Statements</div><div class="section-content"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div id="snippetEditor-section14" class="snippet-editor editable" contenteditable="true" data-persist data-key="rams.section14.ramslistfp"><p></p></div></div></section>
+
+</div><!-- /.sheet -->
+</div><!-- /#tab-rams -->
+
+
+<!-- ═══════════════════════════════════════
+     METHOD STATEMENT TAB
+═══════════════════════════════════════ -->
+<div id="tab-ms" class="tab-panel">
+<div class="wrapper sheet">
+
+<div class="letterhead" contenteditable="false">
+  <div class="lh-left"><img class="lh-logo" id="lhLogoms" src="ahs.png" alt="AHS Logo" onerror="this.style.display='none'"><div class="lh-produced"><span class="lh-muted">Produced by</span><span class="lh-strong" id="lhProducerms" contenteditable="true">AHS Compliance Consulting</span></div></div>
+  <div class="lh-center"><div class="lh-clientline"><span class="lh-muted">Prepared for</span><span class="lh-client" id="lhClientNamems" contenteditable="true">Client Name</span></div><div class="lh-title" id="lhTitlems" contenteditable="true">Method Statement</div><div class="lh-subtitle" id="lhSubtitlems" contenteditable="true"></div></div>
+  <div class="lh-right"><div class="lh-chip"><div class="lh-chip-label">Date</div><div class="lh-chip-value" id="lhDatems">Select Date</div></div></div>
+</div>
+
+<div class="client-logo-section"><img src="client.png" alt="Client Logo" class="client-logo" id="clientLogoms" onerror="this.style.display='none'"></div>
+<h1><span contenteditable="true" data-persist data-key="ms.projectName">Project Name</span></h1>
+
+<div id="methodTables" data-persist-container data-key="ms.pages">
+  <section class="wm-section method-statement-section ms-page" data-page-index="1" data-key="ms.page.1">
+    <div class="headersplitter" style="margin:20px 0;border-top:2px solid #333;position:relative;">
+      <span style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:white;padding:0 10px;font-size:20px;font-weight:bold;">NEW METHOD STATEMENT</span>
+      <div class="no-print snippet-toolbar">
+        <label>MS Snippet:</label><select class="ms-snip-select"></select>
+        <button type="button" class="btn ms-snip-insert">Insert</button>
+        <button type="button" class="btn danger ms-snip-clear">Clear All</button>
+        <button type="button" class="btn ms-break">Break</button>
+        <button type="button" class="btn add-page">+ Page</button>
+        <button type="button" class="btn remove-page">− Page</button>
+      </div>
+      <table class="method-table" style="table-layout:fixed;width:100%;">
+        <colgroup><col style="width:12%;"><col style="width:33%;"><col style="width:55%;"></colgroup>
+        <tbody>
+          <tr><th colspan="3" class="section-header">METHOD STATEMENT</th></tr>
+          <tr>
+            <td class="section-label">TITLE</td>
+            <td class="editable-section" contenteditable="true" data-persist data-key="ms.page.1.title"></td>
+            <td class="section-content" rowspan="6"><div class="editable-section" contenteditable="true" data-snippet-category="procedures" data-persist data-key="ms.page.1.procedure" style="min-height:260px;"></div></td>
+          </tr>
+          <tr><td class="section-label">EQUIPMENT</td><td class="editable-section" contenteditable="true" data-persist data-key="ms.page.1.equipment"></td></tr>
+          <tr><td class="section-label">PPE</td><td class="editable-section" contenteditable="true" data-persist data-key="ms.page.1.ppe"></td></tr>
+          <tr><th colspan="2" class="section-header">TRAINING &amp; ASSOCIATED RISKS</th></tr>
+          <tr><td colspan="2" class="section-content"><div class="editable-section" contenteditable="true" data-persist data-key="ms.page.1.training" style="min-height:150px;"></div></td></tr>
+          <tr><td class="section-label" style="font-size:9px;font-weight:600;padding:2px 6px;">RISK ASSESSMENT REF:</td><td class="editable-section" contenteditable="true" data-persist data-key="ms.page.1.raRef"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div><!-- /#methodTables -->
+</div>
+</div><!-- /#tab-ms -->
+
+
+<!-- ═══════════════════════════════════════
+     RISK ASSESSMENT TAB
+═══════════════════════════════════════ -->
+<div id="tab-ra" class="tab-panel tab-panel-landscape">
+<div class="sheet sheet-landscape form-page" role="document" data-persist-container data-key="ra.page">
+
+<div class="letterhead" contenteditable="false">
+  <div class="lh-left"><img class="lh-logo" id="lhLogora" src="ahs.png" alt="AHS Logo" onerror="this.style.display='none'"><div class="lh-produced"><span class="lh-muted">Produced by</span><span class="lh-strong" id="lhProducerra" contenteditable="true">AHS Compliance Consulting</span></div></div>
+  <div class="lh-center"><div class="lh-clientline"><span class="lh-muted">Prepared for</span><span class="lh-client" id="lhClientNamera" contenteditable="true">Client Name</span></div><div class="lh-title" id="lhTitlera" contenteditable="true">Risk Assessment</div><div class="lh-subtitle" id="lhSubtitlera" contenteditable="true">Risk Assessment</div></div>
+  <div class="lh-right"><div class="lh-chip"><div class="lh-chip-label">Date</div><div class="lh-chip-value" id="lhDatera">Select Date</div></div></div>
+</div>
+
+<div class="client-logo-section"><img src="client.png" alt="Client Logo" class="client-logo" id="clientLogora" onerror="this.style.display='none'"></div>
+
+<section class="meta" contenteditable="false">
+  <div><div class="label">Task / activity</div><strong contenteditable="true" class="editable editable-meta" data-persist data-key="ra.meta.task"></strong></div>
+  <div><div class="label">Location</div><strong contenteditable="true" class="editable editable-meta" data-persist data-key="ra.meta.location"></strong></div>
+  <div><div class="label">Project Name</div><strong contenteditable="true" class="editable editable-meta" data-persist data-key="ra.meta.project"></strong></div>
+  <div><div class="label">Risk Assessment Reference</div><strong contenteditable="true" class="editable editable-meta" data-persist data-key="ra.meta.reference"></strong></div>
+</section>
+
+<div class="band" contenteditable="false"><strong>Evaluation of risk</strong> – The Procedure is outlined below</div>
+
+<section class="matrix-wrap" contenteditable="false">
+  <div class="matrix-head">RISKS — DEFINED AS THE LIKELIHOOD SOMETHING WILL HAPPEN AND HOW SEVERE THAT EVENT IS</div>
+  <div class="matrix-grid">
+    <div class="matrix-col">
+      <h3>LIKELIHOOD</h3>
+      <div class="level"><span class="badge low">LOW</span> Infrequent — not likely to happen.</div>
+      <div class="level"><span class="badge med">MEDIUM</span> Less regular but recognised as likely.</div>
+      <div class="level"><span class="badge high">HIGH</span> May happen regularly or is a common occurrence.</div>
+    </div>
+    <div class="matrix-col">
+      <h3>SEVERITY</h3>
+      <div class="level"><span class="badge low">LOW</span> Minor injuries or slight property damage.</div>
+      <div class="level"><span class="badge med">MEDIUM</span> Serious injuries or off work 3+ days.</div>
+      <div class="level"><span class="badge high">HIGH</span> Fatal accident, multiple injuries or major damage.</div>
+    </div>
+  </div>
+  <div class="key"><div><span class="swatch low"></span><strong>LOW</strong></div><div><span class="swatch med"></span><strong>MEDIUM</strong></div><div><span class="swatch high"></span><strong>HIGH</strong></div></div>
+</section>
+
+<section>
+  <div class="no-print snippet-toolbar" style="margin-bottom:12px;">
+    <label>Hazard Snippet:</label><select class="ra-snip-select"></select>
+    <button type="button" class="btn snip-insert-ra">Insert Row</button>
+    <button type="button" class="btn add-ra-form">+ Form</button>
+    <button type="button" class="btn remove-ra-form">− Form</button>
+  </div>
+  <table class="table hazardsTable" data-role="hazards">
+    <thead>
+      <tr>
+        <th class="w-20">What are the hazards?</th>
+        <th>Who might be harmed?</th>
+        <th>How</th>
+        <th class="center w-10">Initial risk</th>
+        <th class="w-20">What controls are required?</th>
+        <th class="center w-10">Residual risk</th>
+        <th class="w-12">Action by</th>
+      </tr>
+    </thead>
+    <tbody data-persist-container data-key="ra.hazards.tbody">
+      <tr>
+        <td><div class="editable" contenteditable="true"></div></td>
+        <td><div class="editable" contenteditable="true"></div></td>
+        <td><div class="editable" contenteditable="true"></div></td>
+        <td contenteditable="false"><div class="risk-cell"><select class="risk-select"><option value="">-- Select --</option><option value="low">LOW</option><option value="medium">MEDIUM</option><option value="high">HIGH</option></select><span class="badge"></span></div></td>
+        <td><div class="editable" contenteditable="true"></div></td>
+        <td contenteditable="false"><div class="risk-cell"><select class="risk-select"><option value="">-- Select --</option><option value="low">LOW</option><option value="medium">MEDIUM</option><option value="high">HIGH</option></select><span class="badge"></span></div></td>
+        <td><div class="editable" contenteditable="true"></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+      <!-- Evaluation of the risk table -->
+      <div class="eval-wrap" contenteditable="false">
+        <table class="table eval-table">
+          <thead><tr><th colspan="2">Evaluation of the risk</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="w-20"><strong>Aim</strong></td>
+              <td>To Reduce the risk to low if possible.</td>
+            </tr>
+            <tr>
+              <td class="w-20"><strong>List the hazards associated with an activity</strong></td>
+              <td>Review the task/activity and estimate using Low (L), Medium (M), High (H) the likelihood of harm being caused to the person or persons in proximity. Then do the same for the severity using the same (L,M,H) metrics.</td>
+            </tr>
+            <tr>
+              <td class="w-20"><strong>Results</strong></td>
+              <td>
+                <ul>
+                  <li><strong>Combined risk = LOW:</strong> the activity does not require further attention beyond the standard 'good practice' controls included in the Construction Health and Safety Plan (or Environmental Management Plan), site rules and relevant procedures / guidance.</li>
+                  <li><strong>Combined risk = MEDIUM:</strong> the activity could be significant and management control is important. Manage through Method Statements and or other management plans or procedures specific to the project. Additional training or resources may be required.</li>
+                  <li><strong>Combined risk = HIGH:</strong> deemed to be significant and senior management control is of a high priority. Consider design changes. Best Practice measures should be adopted. Manage through Method Statements and or other management plans or procedures / instructions specific to the activity plus specialist knowledge and planning. Note that higher risks may require more effort (and costs) to control.</li>
+                </ul>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+</section>
+
+<section class="ppe-wrap" contenteditable="false">
+  <table class="table ppe-table"><colgroup><col style="width:10%"><col style="width:90%"></colgroup>
+    <thead><tr><th colspan="2">Personal Protective Equipment (PPE)</th></tr></thead>
+    <tbody>
+      <tr><td class="ppe-label"><strong>Instruction</strong></td><td><div class="editable" contenteditable="false">Identify all necessary PPE.</div></td></tr>
+      <tr><td class="ppe-label"><strong>Checklist</strong></td><td>
+        <div class="ppe-checks" data-persist-container data-key="ra.ppe.checks">
+          <div class="check"><label><input type="checkbox" id="ppe_safety_helmet"> <span class="editable" contenteditable="true">Safety Helmet</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_hivis"> <span class="editable" contenteditable="true">Hi-Vis Clothing</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_footwear"> <span class="editable" contenteditable="true">Safety Footwear</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_gloves"> <span class="editable" contenteditable="true">Gloves</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_eyes"> <span class="editable" contenteditable="true">Eye Protection</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_hearing"> <span class="editable" contenteditable="true">Hearing Protection</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_res_light"> <span class="editable" contenteditable="true">Respiratory Protection (Light)</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_res_heavy"> <span class="editable" contenteditable="true">Respiratory Protection (Heavy)</span></label></div>
+          <div class="check"><label><input type="checkbox" id="ppe_harness"> <span class="editable" contenteditable="true">Harness</span></label></div>
+        </div>
+      </td></tr>
+      <tr><td class="ppe-label"><strong>Notes</strong></td><td><div class="editable" contenteditable="true">Task-specific PPE above does not replace mandatory PPE requirements.</div></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="equip-wrap">
+  <table class="table equip-table"><thead><tr><th colspan="2">Equipment Details / Schedule</th></tr></thead>
+    <tbody><tr><td class="w-20"><strong>Items</strong></td><td><ol class="editable" contenteditable="true"><li></li></ol></td></tr></tbody>
+  </table>
+</section>
+
+<section>
+  <table class="table coshh-table"><thead><tr><th colspan="2">COSHH Information</th></tr></thead>
+    <tbody>
+      <tr><td class="w-20"><strong>Description</strong></td><td><div class="editable" contenteditable="true">N/A</div></td></tr>
+      <tr><td class="w-20"><strong>Notes</strong></td><td><div class="editable" contenteditable="true">N/A</div></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="signreg-wrap" contenteditable="false">
+  <h2>Sign-off Register</h2>
+  <table class="table signreg-table" id="signregTable">
+    <thead><tr><th style="width:3rem;">#</th><th style="width:22%;">Name</th><th style="width:20%;">Position / Role</th><th style="width:20%;">Company</th><th style="width:18%;">Signature</th><th style="width:12%;">Date</th></tr></thead>
+    <tbody data-persist-container data-key="ra.signreg.tbody">
+      <tr><td class="center rowno">1</td><td><div class="editable" contenteditable="true"><br></div></td><td><div class="editable" contenteditable="true"><br></div></td><td><div class="editable" contenteditable="true"><br></div></td><td><div class="sig-box editable" contenteditable="true"></div></td><td><div class="editable" contenteditable="true"><br></div></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <table class="review">
+    <thead>
+      <tr>
+        <th style="width:8%"><span contenteditable="true">Revision Number</span></th>
+        <th style="width:48%"><span contenteditable="true">Revision comments</span></th>
+        <th style="width:30%"><span contenteditable="true">Revision date</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="height:20px"><span contenteditable="true">Rev1</span></td>
+        <td><span contenteditable="true">Initial Creation</span></td>
+        <td><span contenteditable="true">Add Date</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="font-size:13px;margin:8px 0 4px;"><strong>This document has been produced by</strong></div>
+</section>
+
+<section>
+  <div class="sig-grid" contenteditable="false">
+    <div class="sig"><div class="label">Assessor</div><div class="editable sig-value" contenteditable="true"></div></div>
+    <div class="sig"><div class="label">Position</div><div class="editable sig-value" contenteditable="true"></div></div>
+    <div class="sig"><div class="label">Signed</div><div class="editable sig-value" contenteditable="true"></div></div>
+    <div class="sig"><div class="label">Date</div><div class="editable sig-value" contenteditable="true"></div></div>
+  </div>
+</section>
+
+<button id="backToTop" class="back-to-top" title="Back to top"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg></button>
+
+</div><!-- /.sheet -->
+</div><!-- /#tab-ra -->
+
+
+<!-- ═══════════════════════════════════════
+     CPP TAB
+═══════════════════════════════════════ -->
+<div id="tab-cpp" class="tab-panel">
+<div class="sheet" role="document">
+
+<div class="letterhead" contenteditable="false">
+  <div class="lh-left"><img class="lh-logo" id="lhLogocpp" src="ahs.png" alt="AHS Logo" onerror="this.style.display='none'"><div class="lh-produced"><span class="lh-muted">Produced by</span><span class="lh-strong" id="lhProducecpp" contenteditable="true">AHS Compliance Consulting</span></div></div>
+  <div class="lh-center"><div class="lh-clientline"><span class="lh-muted">Prepared for</span><span class="lh-client" id="lhClientNamecpp" contenteditable="true">Client Name</span></div><div class="lh-title" id="lhTitlecpp" contenteditable="true">Construction Phase Plan</div><div class="lh-subtitle" id="lhSubtitlecpp" contenteditable="true"></div></div>
+  <div class="lh-right"><div class="lh-chip"><div class="lh-chip-label">Date</div><div class="lh-chip-value" id="lhDatecpp" data-persist data-key="cpp.date">Select Date</div></div></div>
+</div>
+
+<div class="client-logo-section"><img src="client.png" alt="Client Logo" class="client-logo" id="clientLogocpp" onerror="this.style.display='none'"></div>
+
+<h1 style="text-align:center;"><span contenteditable="true" data-persist data-key="cpp.projectTitle">Project Name</span></h1>
+
+<table class="project-info">
+  <tbody>
+    <tr><td class="label"><strong>Project Name</strong></td><td class="value" contenteditable="true" data-persist data-key="cpp.projectName"></td></tr>
+    <tr><td class="label"><strong>Project Address</strong></td><td class="value" contenteditable="true" data-persist data-key="cpp.projectAddress"></td></tr>
+    <tr><td class="label"><strong>Works to be Undertaken</strong></td><td class="value" contenteditable="true" data-persist data-key="cpp.worksUndertaken"></td></tr>
+    <tr><td class="label"><strong>Client Name</strong></td><td class="value" contenteditable="true" data-persist data-key="cpp.clientName"></td></tr>
+    <tr><td class="label"><strong>Client Address</strong></td><td class="value" contenteditable="true" data-persist data-key="cpp.clientAddress"></td></tr>
+    <tr><td class="label"><strong>Prepared by</strong></td><td class="value" contenteditable="true" data-persist data-key="cpp.preparedBy"></td></tr>
+  </tbody>
+</table>
+
+<h1>Revision Register</h1>
+<table class="project-info" id="revision-history-table">
+  <tbody>
+    <tr><td class="label"><strong>Rev</strong></td><td class="label"><strong>Description</strong></td><td class="label"><strong>Issued By</strong></td><td class="label"><strong>Checked By</strong></td><td class="label"><strong>Date</strong></td></tr>
+    <tr><td class="value" contenteditable="true">01</td><td class="value" contenteditable="true">Initial Creation</td><td class="value" contenteditable="true"></td><td class="value" contenteditable="true"></td><td class="value" contenteditable="true"></td></tr>
+    <tr><td class="value" contenteditable="true">02</td><td class="value" contenteditable="true"></td><td class="value" contenteditable="true"></td><td class="value" contenteditable="true"></td><td class="value" contenteditable="true"></td></tr>
+  </tbody>
+</table>
+
+<table class="project-info" id="revision-signoff-table">
+  <tbody>
+    <tr><td class="label"><strong>Author</strong></td><td class="label"><strong>Signature</strong></td><td class="label"><strong>Date</strong></td></tr>
+    <tr><td class="value" contenteditable="true"></td><td class="value" style="height:50px;" contenteditable="true"></td><td class="value" contenteditable="true" id="cpp-current-date"></td></tr>
+  </tbody>
+</table>
+
+<nav id="toc" style="margin-left:30px;" aria-label="Contents"></nav>
+
+<section class="section-cpp" id="section-1-project-directory-cpp">
+  <div class="section-header-cpp">Section 1: Project Directory</div>
+  <div class="section-content-cpp">
+    <table class="directory-table"><tbody>
+      <tr><td class="dir-label">Client:</td><td contenteditable="true"></td><td class="dir-label">Principal Designer:</td><td contenteditable="true"></td></tr>
+      <tr><td class="dir-label">Designer:</td><td contenteditable="true"></td><td class="dir-label">Principal Contractor:</td><td contenteditable="true"></td></tr>
+      <tr><td class="dir-label">Contractor:</td><td contenteditable="true"></td><td class="dir-label">Contractor:</td><td contenteditable="true"></td></tr>
+      <tr><td class="dir-label">Expected Start:</td><td contenteditable="true"></td><td class="dir-label">Expected Completion:</td><td contenteditable="true"></td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- CPP Sections 2–18 (snippet editors) -->
+<section class="section-cpp" id="section-Project-Details-cpp"><div class="section-header-cpp">Section 2: Project Details</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section2"></div></div></section>
+<section class="section-cpp" id="section-3-project-specific-conditions-cpp"><div class="section-header-cpp">Section 3: Project Specific Conditions &amp; Arrangements</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section3"></div></div></section>
+<section class="section-cpp" id="section-4-environmental-restrictions-cpp"><div class="section-header-cpp">Section 4: Environmental Restrictions and Existing Site Risks</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section4"></div></div></section>
+<section class="section-cpp" id="section-5-significant-design-and-construction-hazards-cpp"><div class="section-header-cpp">Section 5: Significant Design and Construction Hazards</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section5"></div></div></section>
+<section class="section-cpp" id="section-6-format-and-content-of-the-construction-phase-plan-cpp"><div class="section-header-cpp">Section 6: Format and Content of the Construction Phase Plan</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section6"></div></div></section>
+<section class="section-cpp" id="section-7-monitoring-arrangements-cpp"><div class="section-header-cpp">Section 7: Monitoring Arrangements</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section7"></div></div></section>
+<section class="section-cpp" id="section-8-health-and-safety-meetings-cpp"><div class="section-header-cpp">Section 8: Health and Safety Meeting Liaison and Co-ordination</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section8"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-9-site-rules-cpp">Section 9: Site Rules</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section9"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-10-arrangements-for-changes-in-design-cpp">Section 10: Arrangements for Changes in Design</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section10"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-11-information-instructions-cpp">Section 11: Information, Instruction &amp; Training</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section11"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-12-environmental-management-cpp">Section 12: Environmental Management</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section12"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-13-plant-and-equipment-cpp">Section 13: Plant &amp; Equipment</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section13"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-14-Occupational-health-cpp">Section 14: Occupational Health</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section14"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-15-health-and-safety-file-cpp">Section 15: Health &amp; Safety File Information</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section15"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-16-incident-arragements-cpp">Section 16: Accident &amp; Incident Arrangements</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section16"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-17-enforcing-authorities-cpp">Section 17: Enforcing Authorities</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section17"></div></div></section>
+<section class="section-cpp"><div class="section-header-cpp" id="section-18-appendices-cpp">Section 18: Appendices</div><div class="section-content-cpp"><div class="no-print snippet-toolbar"><label>Snippet:</label><select class="snip-select"></select><button type="button" class="btn snip-insert">Insert</button><button type="button" class="btn danger snip-clear">Clear</button></div><div class="snippet-editor editable" contenteditable="true" data-persist data-key="cpp.section18"></div></div></section>
+
+</div><!-- /.sheet -->
+</div><!-- /#tab-cpp -->
+
+
+<!-- ═══════════════════════════════════════
+     CLIENT PROFILE MODAL
+═══════════════════════════════════════ -->
+<div id="profileModal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <button class="modal-close" id="btnCloseProfileModal">×</button>
+    <h3>📁 Client PDF Profiles</h3>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">These profiles only affect the <strong>PDF output</strong>. The app UI always stays in AHS brand colours.</p>
+    <div id="profileList" class="profile-list"></div>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
+    <h4 style="margin-bottom:12px;font-size:14px;">Add / Edit Profile</h4>
+    <input type="hidden" id="editProfileId">
+    <div class="modal-field"><label for="profileName">Client Name</label><input type="text" id="profileName" placeholder="e.g. Morley Ventilation Ltd"></div>
+    <div class="modal-field"><label for="profileColor">Primary Colour <small style="font-weight:400;color:#6b7280;">(PDF headers &amp; section bars)</small></label><input type="color" id="profileColor" value="#4BBFD6"></div>
+    <div class="modal-field"><label for="profileLogo">Client Logo <small style="font-weight:400;color:#6b7280;">(PNG/JPG — embedded in PDF only)</small></label><input type="file" id="profileLogo" accept="image/png,image/jpeg,image/jpg"><div id="profileLogoPreview" style="margin-top:8px;min-height:40px;"></div></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-primary" id="btnSaveProfile">💾 Save Profile</button>
+      <button type="button" class="btn-secondary" id="btnClearProfileForm">Clear</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="saveStatus" class="save-status" style="display:none;"></div>
+
+<!-- Snippet libraries — copy these files alongside index.html -->
+<script src="snippetsramscover.js" defer></script>
+<script src="snippetscpptemplates.js" defer></script>
+<script src="cpp-content.js" defer></script>
+<script src="snippetsramstemplates.js" defer></script>
+<script src="snippetsra.js" defer></script>
+<script src="snippetsms.js" defer></script>
+<script src="snippetscpp.js" defer></script>
+<!-- jsPDF must load before the report generator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="client-reportpdfv2.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>
